@@ -4,12 +4,35 @@ import random
 import math
 
 def sigmoid(x):
-    return 1 / (1 + math.exp(-x))
+    return (1 / (1 + math.exp(-x)))
 
-def sigmoid_(x):
-    return x * (1 - x)
+def sigmoid_prime(x):
+    return (x * (1 - x))
 
-def cost()
+class Node:
+    def __init__(self, input_node_count, output_node_count):
+        self.input_weights = list()
+        self.input_values = list()
+        self.weight_modifications = list()
+        self.bias = random.random()
+        self.input_node_count = input_node_count
+        self.output_node_count = output_node_count
+        self.active_value = 0
+
+    def calculate(self, input):
+        self.input_values = list(input)
+        for x in range(0, self.input_node_count):
+            sum_of_wb = 0
+            for i in range(0, self.output_node_count):
+                # where input is the activation on the previous layer
+                sum_of_wb += (self.input_weights[x] * input[x])
+            self.active_value = sigmoid(sum_of_wb + self.bias)
+            return self.active_value
+
+
+
+
+
 
 class Network:
     def __init__(self, count_hidden_layers, count_hidden_nodes, count_input_nodes, count_output_nodes):
@@ -17,7 +40,7 @@ class Network:
         self.count_hidden_nodes = count_hidden_nodes
         self.count_input_nodes = count_input_nodes
         self.count_output_nodes = count_output_nodes
-        self.layers = list();
+        self.layers = list()
 
         for level in range(0, count_hidden_nodes + 1):
             nextCount = 0
@@ -33,38 +56,70 @@ class Network:
                 nextCount = count_hidden_nodes
                 previousCount = count_hidden_nodes
 
-            layer {"nodes": list()}
+            layer = list()
 
             for nodeGroup in range(0, nextCount):
-                node = {"inputWeights": list(), "bias": random.random() * 10 }
+                node = Node(previousCount, nextCount)
 
                 for x in range(0, previousCount):
-                    node["inputWeights"].append(random.random())
+                    node.input_weights.append(random.random())
+                    node.weight_modifications.append(0)
 
                 layer.append(node)
             self.layers.append(layer)
 
-    def feed_forward(self, input, level = 0):
-        count_output_nodes = self.count_hidden_nodes if level != self.count_hidden_layers else self.count_output_nodes
-        length = self.count_input_nodes if level == 0 else self.count_hidden_nodes
-        output_layer_nodes = [None]*(count_output_nodes)
-        for x in range(0, count_output_nodes):
-            sum_of_wb = 0
-            for i in range(0, length):
-                # where input is the activation on the previous layer
-                sum_of_wb += (self.all_weights[level][x][i] * input[i])
-            output_layer_nodes[x] = sigmoid(sum_of_wb - self.all_biases[level][x])
+    def feed_forward(self, input, expected = None, level = 0):
+        #count_output_nodes = self.count_hidden_nodes if level != self.count_hidden_layers else self.count_output_nodes
+        #length = self.count_input_nodes if level == 0 else self.count_hidden_nodes
+        output = list()
+        count_of_nodes = len(self.layers[level])
+        for i in range(0, count_of_nodes):
+            output.append(self.layers[level][i].calculate(input))
 
         if(level == self.count_hidden_layers):
-            print(output_layer_nodes)
+            if(expected != None):
+                self.feed_backward(expected, level)
+            else:
+                print(output)
         else:
             level += 1
-            self.feed_forward(output_layer_nodes, level)
+            self.feed_forward(output, expected, level)
 
-    def feed_backward(self, output_layer_nodes, expected_output):
+    def feed_backward(self, expected_output, level):
+        
+        current_layer_node_count = len(self.layers[level])
+        next_propagation_values = list()
+        error = 0
+        for i in range(0, current_layer_node_count):
+            node = self.layers[level][i]
+            if(level == self.count_hidden_layers):
+                error = -(expected_output[i] - node.active_value)
+            else:
+                for o in range(0, len(self.layers[level + 1])):
+                    error += expected_output[o][i] * self.layers[level + 1][o].input_weights[i]
+            input_weights_count = len(node.input_weights)
+            
+            error_values = list()
+            for x in range(0, input_weights_count):
+                a_prev = node.input_values[x]
+                sigm = sigmoid_prime(node.active_value)
+                weight_error = error * sigm * a_prev
+                error_values.append(error * sigm)
+                node.weight_modifications[x] += weight_error
+            next_propagation_values.append(error_values)
+        
+        if(level != 0):
+            level = level - 1
+            self.feed_backward(next_propagation_values, level)
 
-        # sum(weight_i * previous_activation_i) - bias = output_activation
-        # cost = ((output_activation - expected_activation) ** 2) / 2
+    def update(self):
+        for level in range(0, self.count_hidden_layers):
+            for n in range(0, len(self.layers[level])):
+                for x in range(0, len(self.layers[level][n].input_weights)):
+                    self.layers[level][n].input_weights[x] = self.layers[level][n].input_weights[x] - self.layers[level][n].weight_modifications[x]
 
-g = Network(3, 3, 2, 1)
-g.feed_forward([2,3])
+if __name__ == "__main__":
+    net = Network(3, 3, 2, 2)
+    net.feed_forward([2,3], [1, 1])
+    net.feed_forward([3,2], [0, 1])
+    net.feed_forward([2,3])
