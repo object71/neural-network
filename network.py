@@ -6,8 +6,10 @@ import math
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
-def sigmoid_(x): 
-    return x * (1 - x) 
+def sigmoid_(x):
+    return x * (1 - x)
+
+def cost()
 
 class Network:
     def __init__(self, count_hidden_layers, count_hidden_nodes, count_input_nodes, count_output_nodes):
@@ -50,7 +52,25 @@ class Network:
         for x in range(0, count_output_nodes):
             sum_of_wb = 0
             for i in range(0, length):
-                sum_of_wb += (self.all_weights[level][x][i])
+                # where input is the activation on the previous layer
+                sum_of_wb += (self.all_weights[level][x][i] * input[i])
+            output_layer_nodes[x] = sigmoid(sum_of_wb - self.all_biases[level][x])
+
+        if(level == self.count_hidden_layers):
+            print(output_layer_nodes)
+        else:
+            level += 1
+            self.feed_forward(output_layer_nodes, level)
+
+    def feed_backward(self, output_layer_nodes, expected_output, level = 0):
+        count_output_nodes = self.count_hidden_nodes if level != self.count_hidden_layers else self.count_output_nodes
+        length = self.count_input_nodes if level == 0 else self.count_hidden_nodes
+        output_layer_nodes = [None]*(count_output_nodes)
+        for x in range(0, count_output_nodes):
+            sum_of_wb = 0
+            for i in range(0, length):
+                # where input is the activation on the previous layer
+                sum_of_wb += (self.all_weights[level][x][i] * input[i])
             output_layer_nodes[x] = sigmoid(sum_of_wb - self.all_biases[level][x])
 
         if(level == self.count_hidden_layers):
