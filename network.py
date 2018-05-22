@@ -17,8 +17,7 @@ class Network:
         self.count_hidden_nodes = count_hidden_nodes
         self.count_input_nodes = count_input_nodes
         self.count_output_nodes = count_output_nodes
-        self.all_weights = [None]*(count_hidden_layers + 1)
-        self.all_biases = [None]*(count_hidden_layers + 1)
+        self.layers = list();
 
         for level in range(0, count_hidden_nodes + 1):
             nextCount = 0
@@ -34,16 +33,16 @@ class Network:
                 nextCount = count_hidden_nodes
                 previousCount = count_hidden_nodes
 
-            self.all_biases[level] = [None]*(nextCount)
-            self.all_weights[level] = [None]*(nextCount)
+            layer {"nodes": list()}
 
             for nodeGroup in range(0, nextCount):
-                self.all_weights[level][nodeGroup] = [None]*(previousCount)
-                self.all_biases[level][nodeGroup] = random.random() * 10
+                node = {"inputWeights": list(), "bias": random.random() * 10 }
 
                 for x in range(0, previousCount):
-                    self.all_weights[level][nodeGroup][x] = random.random()
+                    node["inputWeights"].append(random.random())
 
+                layer.append(node)
+            self.layers.append(layer)
 
     def feed_forward(self, input, level = 0):
         count_output_nodes = self.count_hidden_nodes if level != self.count_hidden_layers else self.count_output_nodes
